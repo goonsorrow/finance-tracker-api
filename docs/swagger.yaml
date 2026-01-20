@@ -1,0 +1,501 @@
+basePath: /
+definitions:
+  handler.getAllTransactionsResponse:
+    properties:
+      transactions:
+        items:
+          $ref: '#/definitions/models.Transaction'
+        type: array
+      wallet:
+        $ref: '#/definitions/models.Wallet'
+    type: object
+  handler.getAllWalletsResponse:
+    properties:
+      wallets:
+        items:
+          $ref: '#/definitions/models.Wallet'
+        type: array
+    type: object
+  handler.getTransactionByIdResponse:
+    properties:
+      transaction:
+        $ref: '#/definitions/models.Transaction'
+      wallet:
+        $ref: '#/definitions/models.Wallet'
+    type: object
+  handler.statusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  models.CreateTransactionInput:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      type:
+        enum:
+        - income
+        - expense
+        - initial
+        type: string
+    required:
+    - amount
+    - category
+    - type
+    type: object
+  models.CreateWalletInput:
+    properties:
+      balance:
+        minimum: 0
+        type: number
+      currency:
+        type: string
+      name:
+        type: string
+    required:
+    - currency
+    - name
+    type: object
+  models.RefreshInput:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  models.RegisterInput:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.SignInInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.Transaction:
+    properties:
+      amount:
+        type: integer
+      category:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      type:
+        description: '"income" или "expense" или "initial"(только при создании кошелька
+          с первоначальным балансом)'
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      wallet_id:
+        type: integer
+    type: object
+  models.UpdateTransactionInput:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+    type: object
+  models.Wallet:
+    properties:
+      balance:
+        type: integer
+      created_at:
+        type: string
+      currency:
+        type: string
+      displayId:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Personal finance tracker API. JWT + Postgres + Docker.
+  title: Finance Tracker API
+  version: "1.0"
+paths:
+  /api/wallets/:
+    get:
+      description: Получить все кошельки пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.getAllWalletsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Список кошельков
+      tags:
+      - wallets
+    post:
+      consumes:
+      - application/json
+      description: Добавить новый кошелёк
+      parameters:
+      - description: Name + Currency
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateWalletInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Создать кошелёк
+      tags:
+      - wallets
+  /api/wallets/{id}:
+    delete:
+      description: Удалить кошелёк и все транзакции
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Удалить кошелёк
+      tags:
+      - wallets
+    get:
+      description: Детали конкретного кошелька
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Wallet'
+        "400":
+          description: Invalid ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Получить кошелёк по ID
+      tags:
+      - wallets
+  /api/wallets/{wallet_id}/transactions/:
+    get:
+      description: Получить все операции по кошельку
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: wallet_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.getAllTransactionsResponse'
+      security:
+      - BearerAuth: []
+      summary: Список транзакций кошелька
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Пополнение (+) или списание (-) с кошелька
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: wallet_id
+        required: true
+        type: integer
+      - description: Сумма + Тип
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTransactionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction ID
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Создать транзакцию
+      tags:
+      - transactions
+  /api/wallets/{wallet_id}/transactions/{txId}:
+    delete:
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: wallet_id
+        required: true
+        type: integer
+      - description: Transaction ID
+        in: path
+        name: txId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить транзакцию
+      tags:
+      - transactions
+    get:
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: wallet_id
+        required: true
+        type: integer
+      - description: Transaction ID
+        in: path
+        name: txId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.getTransactionByIdResponse'
+      security:
+      - BearerAuth: []
+      summary: Транзакция по ID
+      tags:
+      - transactions
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: wallet_id
+        required: true
+        type: integer
+      - description: Transaction ID
+        in: path
+        name: txId
+        required: true
+        type: integer
+      - description: Changes
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTransactionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить транзакцию
+      tags:
+      - transactions
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get JWT token
+      parameters:
+      - description: Credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignInInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sign In
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access по refresh токену
+      parameters:
+      - description: Refresh token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefreshInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New tokens
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить токены
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Создать аккаунт
+      parameters:
+      - description: Email + Password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User ID
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация пользователя
+      tags:
+      - auth
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

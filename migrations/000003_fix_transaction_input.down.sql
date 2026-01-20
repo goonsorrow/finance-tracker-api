@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE transactions ALTER COLUMN amount TYPE INT;
+
+COMMIT;
