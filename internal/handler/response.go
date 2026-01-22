@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/goonsorrow/finance-tracker/internal/service"
+	"github.com/goonsorrow/finance-tracker-api/internal/service"
 )
 
 func NewHandler(services *service.Service, logger *slog.Logger) *Handler {

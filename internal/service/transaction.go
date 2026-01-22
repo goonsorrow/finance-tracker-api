@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/goonsorrow/finance-tracker/internal/models"
-	"github.com/goonsorrow/finance-tracker/internal/repository"
+	"github.com/goonsorrow/finance-tracker-api/internal/models"
+	"github.com/goonsorrow/finance-tracker-api/internal/repository"
 )
 
 func (s *TransactionService) validateWalletAccess(ctx context.Context, userId, walletId int) error {

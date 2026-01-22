@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/goonsorrow/finance-tracker/configs"
-	"github.com/goonsorrow/finance-tracker/internal/app"
-	"github.com/goonsorrow/finance-tracker/internal/handler"
-	"github.com/goonsorrow/finance-tracker/internal/logger"
-	"github.com/goonsorrow/finance-tracker/internal/repository"
-	"github.com/goonsorrow/finance-tracker/internal/service"
+	"github.com/goonsorrow/finance-tracker-api/configs"
+	"github.com/goonsorrow/finance-tracker-api/internal/app"
+	"github.com/goonsorrow/finance-tracker-api/internal/handler"
+	"github.com/goonsorrow/finance-tracker-api/internal/logger"
+	"github.com/goonsorrow/finance-tracker-api/internal/repository"
+	"github.com/goonsorrow/finance-tracker-api/internal/service"
 	"github.com/spf13/viper"
 )
 

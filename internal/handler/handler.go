@@ -10,8 +10,8 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/goonsorrow/finance-tracker/docs"
-	"github.com/goonsorrow/finance-tracker/internal/service"
+	_ "github.com/goonsorrow/finance-tracker-api/docs"
+	"github.com/goonsorrow/finance-tracker-api/internal/service"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )

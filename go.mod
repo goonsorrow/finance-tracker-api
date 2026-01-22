@@ -1,4 +1,4 @@
-module github.com/goonsorrow/finance-tracker
+module github.com/goonsorrow/finance-tracker-api
 
 go 1.25.3
 

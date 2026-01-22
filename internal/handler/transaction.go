@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/goonsorrow/finance-tracker/internal/models"
+	"github.com/goonsorrow/finance-tracker-api/internal/models"
 )
 
 type getAllTransactionsResponse struct {

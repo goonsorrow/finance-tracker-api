@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/goonsorrow/finance-tracker/internal/models"
+	"github.com/goonsorrow/finance-tracker-api/internal/models"
 	"github.com/jmoiron/sqlx"
 )
 

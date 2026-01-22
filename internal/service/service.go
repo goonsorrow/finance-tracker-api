@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/goonsorrow/finance-tracker/configs"
-	"github.com/goonsorrow/finance-tracker/internal/models"
-	"github.com/goonsorrow/finance-tracker/internal/repository"
+	"github.com/goonsorrow/finance-tracker-api/configs"
+	"github.com/goonsorrow/finance-tracker-api/internal/models"
+	"github.com/goonsorrow/finance-tracker-api/internal/repository"
 )
 
 type Authorization interface {
