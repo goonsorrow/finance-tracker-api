@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  handler.getAllCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/models.Category'
+        type: array
+    type: object
   handler.getAllTransactionsResponse:
     properties:
       transactions:
@@ -28,35 +35,91 @@ definitions:
       status:
         type: string
     type: object
+  models.Category:
+    properties:
+      created_at:
+        type: string
+      icon:
+        example: "\U0001F6D2"
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Groceries
+        type: string
+      type:
+        description: '"income" or "expense"'
+        example: expense
+        type: string
+      updated_at:
+        type: string
+      usage_count:
+        example: 5
+        type: integer
+      user_id:
+        description: 'Fixed typo: omitempy -> omitemty'
+        example: 10
+        type: integer
+    required:
+    - name
+    type: object
+  models.CreateCategoryInput:
+    properties:
+      icon:
+        example: "\U0001F4B0"
+        type: string
+      name:
+        example: Salary
+        type: string
+      type:
+        enum:
+        - income
+        - expense
+        example: income
+        type: string
+    required:
+    - name
+    - type
+    type: object
   models.CreateTransactionInput:
     properties:
       amount:
+        example: 150.5
         type: number
       category:
-        type: string
+        example: 1
+        type: integer
       date:
+        example: "2026-01-27T12:00:00Z"
         type: string
       description:
+        example: Grocery shopping
         type: string
       type:
         enum:
         - income
         - expense
         - initial
+        example: expense
         type: string
     required:
     - amount
     - category
+    - date
     - type
     type: object
   models.CreateWalletInput:
     properties:
       balance:
+        example: 1000
         minimum: 0
         type: number
       currency:
+        example: USD
         type: string
       name:
+        example: Salary Card
         type: string
     required:
     - currency
@@ -94,8 +157,8 @@ definitions:
     properties:
       amount:
         type: integer
-      category:
-        type: string
+      category_id:
+        type: integer
       created_at:
         type: string
       date:
@@ -118,33 +181,43 @@ definitions:
   models.UpdateTransactionInput:
     properties:
       amount:
+        example: 200
         type: number
-      category:
-        type: string
+      category_id:
+        example: 3
+        type: integer
       date:
+        example: "2026-01-28T15:00:00Z"
         type: string
       description:
+        example: Updated description
         type: string
       type:
+        example: income
         type: string
     type: object
   models.Wallet:
     properties:
       balance:
+        example: 15000
         type: integer
       created_at:
         type: string
       currency:
+        example: USD
         type: string
-      displayId:
+      display_id:
         type: integer
       id:
+        example: 1
         type: integer
       name:
+        example: Main Wallet
         type: string
       updated_at:
         type: string
       user_id:
+        example: 10
         type: integer
     type: object
 info:
@@ -153,6 +226,112 @@ info:
   title: Finance Tracker API
   version: "1.0"
 paths:
+  /api/categories:
+    get:
+      description: Получить все категории пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.getAllCategoriesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Список категорий
+      tags:
+      - categories
+  /api/categories/:
+    post:
+      consumes:
+      - application/json
+      description: Добавить новую категорию
+      parameters:
+      - description: Name + Type + Icon
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCategoryInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      security:
+      - Bearer: []
+      summary: Создать категорию
+      tags:
+      - categories
+  /api/categories/{id}:
+    delete:
+      description: Удалить категорию
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Удалить категорию
+      tags:
+      - categories
+    get:
+      description: Детали конкретной категории
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Invalid ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Получить категорию по ID
+      tags:
+      - categories
   /api/wallets/:
     get:
       description: Получить все кошельки пользователя
@@ -170,7 +349,7 @@ paths:
               type: string
             type: object
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Список кошельков
       tags:
       - wallets
@@ -195,7 +374,7 @@ paths:
               type: integer
             type: object
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Создать кошелёк
       tags:
       - wallets
@@ -222,7 +401,7 @@ paths:
               type: string
             type: object
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Удалить кошелёк
       tags:
       - wallets
@@ -254,7 +433,7 @@ paths:
               type: string
             type: object
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Получить кошелёк по ID
       tags:
       - wallets
@@ -275,7 +454,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.getAllTransactionsResponse'
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Список транзакций кошелька
       tags:
       - transactions
@@ -305,11 +484,11 @@ paths:
               type: integer
             type: object
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Создать транзакцию
       tags:
       - transactions
-  /api/wallets/{wallet_id}/transactions/{txId}:
+  /api/wallets/{wallet_id}/transactions/{trId}:
     delete:
       parameters:
       - description: Wallet ID
@@ -319,7 +498,7 @@ paths:
         type: integer
       - description: Transaction ID
         in: path
-        name: txId
+        name: trId
         required: true
         type: integer
       produces:
@@ -330,7 +509,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.statusResponse'
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Удалить транзакцию
       tags:
       - transactions
@@ -343,7 +522,7 @@ paths:
         type: integer
       - description: Transaction ID
         in: path
-        name: txId
+        name: trId
         required: true
         type: integer
       produces:
@@ -354,7 +533,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.getTransactionByIdResponse'
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Транзакция по ID
       tags:
       - transactions
@@ -369,7 +548,7 @@ paths:
         type: integer
       - description: Transaction ID
         in: path
-        name: txId
+        name: trId
         required: true
         type: integer
       - description: Changes
@@ -386,7 +565,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.statusResponse'
       security:
-      - BearerAuth: []
+      - Bearer: []
       summary: Обновить транзакцию
       tags:
       - transactions

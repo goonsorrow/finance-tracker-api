@@ -6,30 +6,30 @@ import (
 )
 
 type Wallet struct {
-	DisplayId int       `db:"display_id"`
-	ID        int       `db:"id" json:"id"`
-	UserID    int       `db:"user_id" json:"user_id"`
-	Name      string    `db:"name" json:"name"`
-	Balance   int64     `db:"computed_balance" json:"balance"`
-	Currency  string    `db:"currency" json:"currency"`
+	DisplayId int       `db:"display_id" json:"display_id"`
+	ID        int       `db:"id" json:"id" example:"1"`
+	UserID    int       `db:"user_id" json:"user_id" example:"10"`
+	Name      string    `db:"name" json:"name" example:"Main Wallet"`
+	Balance   int64     `db:"computed_balance" json:"balance" example:"15000"`
+	Currency  string    `db:"currency" json:"currency" example:"USD"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }
 
 type CreateWalletInput struct {
-	Name           string  `json:"name" binding:"required"`
-	InitialBalance float64 `json:"balance" binding:"omitempty,min=0"`
-	Currency       string  `json:"currency" binding:"required,len=3"`
+	Name           string  `json:"name" binding:"required" example:"Salary Card"`
+	InitialBalance float64 `json:"balance" binding:"omitempty,min=0" example:"1000.00"`
+	Currency       string  `json:"currency" binding:"required,len=3" example:"USD"`
 }
 
 type UpdateWalletInput struct {
-	Name    *string  `json:"name"`
-	Balance *float64 `json:"balance" binding:"omitempty,min=0"`
+	Name    *string  `json:"name" example:"Updated Wallet Name"`
+	Balance *float64 `json:"balance" binding:"omitempty,min=0" example:"500.50"`
 }
 
 type UpdateWalletData struct {
-	Name    *string `json:"name"`
-	Balance *int64  `json:"balance" binding:"omitempty,min=0"`
+	Name    *string  `json:"name" example:"Updated Wallet Name"`
+	Balance *float64 `json:"balance" binding:"omitempty,min=0" example:"500.50"`
 }
 
 func (w CreateWalletInput) Validate() error {

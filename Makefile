@@ -43,6 +43,14 @@ docker-down:
 
 db-up:
 	@$(COMPOSE) --env-file $(ENV_COMMON) --env-file $(ENV_DOCKER) up -d db
+	@echo "Waiting for database to be ready..."
+	@until docker exec $$(docker ps -q --filter name=finance-tracker-db) pg_isready -U postgres; do \
+		sleep 1; \
+	done
+	@echo "Database is ready!"
+	@docker exec $$(docker ps -q --filter name=finance-tracker-db) createdb finance_db -U postgres || true
+	@echo "✅ Database finance_db ready!"
+
 
 db-logs:
 	@$(COMPOSE) --env-file $(ENV_COMMON) --env-file $(ENV_DOCKER) logs -f db
@@ -50,10 +58,11 @@ db-logs:
 migrate-docker:
 	@$(COMPOSE) --env-file $(ENV_COMMON) --env-file $(ENV_DOCKER) run --rm migrate
 
-run: db-up migrate-docker
+run: db-up
+	sleep 5
+	make migrate-docker
 	@set -a; . $(ENV_COMMON); . $(ENV_LOCAL); set +a; \
-	echo "DB_HOST=$$DB_HOST DB_PORT=$$DB_PORT" ; \
-	go run $(APP_MAIN)
+	DB_HOST=localhost DB_PORT=$${POSTGRES_PORT:-5436} go run $(APP_MAIN)
 
 build:
 	@go build -o bin/$(APP_NAME) $(APP_MAIN)
@@ -64,4 +73,8 @@ test:
 clean:
 	@rm -rf bin/
 
-.PHONY: help init docker docker-down db-up db-logs migrate-docker run build test clean
+docker-reset:
+	$(COMPOSE) down --volumes
+	$(COMPOSE) up --build
+
+.PHONY: help init docker docker-down docker-reset db-up db-logs migrate-docker run build test clean

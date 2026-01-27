@@ -42,7 +42,7 @@ func (s *TransactionService) Create(ctx context.Context, userId, walletId int, i
 		UserId:      userId,
 		Type:        input.Type,
 		Amount:      amountInCents,
-		Category:    input.Category,
+		CategoryID:  input.CategoryID,
 		Description: input.Description,
 		Date:        input.Date,
 	}
@@ -85,7 +85,7 @@ func (s *TransactionService) Update(ctx context.Context, userId, walletId, trans
 	updateInput := models.UpdateTransactionData{
 		Type:        input.Type,
 		Amount:      amountInCents,
-		Category:    input.Category,
+		CategoryID:  input.CategoryID,
 		Description: input.Description,
 		Date:        input.Date,
 	}

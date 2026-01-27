@@ -27,14 +27,23 @@ type Transaction interface {
 	Create(ctx context.Context, userId, walletId int, transaction models.Transaction) (int, error)
 	GetAll(ctx context.Context, userId, walletId int) ([]models.Transaction, error)
 	GetById(ctx context.Context, userId, walletId, transactionId int) (models.Transaction, error)
-	Delete(ctx context.Context, userId, walletId, transactionId int) error
 	Update(ctx context.Context, userId, walletId, transactionId int, input models.UpdateTransactionData) error
+	Delete(ctx context.Context, userId, walletId, transactionId int) error
+}
+
+type Category interface {
+	Create(ctx context.Context, userId int, category models.Category) (int, error)
+	GetAll(ctx context.Context, userId int) ([]models.Category, error)
+	GetById(ctx context.Context, userId, categoryId int) (models.Category, error)
+	Update(ctx context.Context, userId, categoryId int, input models.UpdateCategoryInput) error
+	Delete(ctx context.Context, userId, categoryId int) error
 }
 
 type Repository struct {
 	Authorization
 	Wallet
 	Transaction
+	Category
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
@@ -42,5 +51,6 @@ func NewRepository(db *sqlx.DB) *Repository {
 		Authorization: NewAuthPostgres(db),
 		Wallet:        NewWalletPostgres(db),
 		Transaction:   NewTransactionPostgres(db),
+		Category:      NewCategoryPostgres(db),
 	}
 }

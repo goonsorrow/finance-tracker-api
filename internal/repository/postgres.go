@@ -1,11 +1,14 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
+
+var ErrRecordNotFound = errors.New("record not found")
 
 const (
 	usersTable        = "users"

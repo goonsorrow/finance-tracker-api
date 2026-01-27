@@ -14,17 +14,13 @@ type getAllWalletsResponse struct {
 	Data []models.Wallet `json:"wallets"`
 }
 
-type getWalletByIdResponse struct {
-	Data models.Wallet `json:"wallet"`
-}
-
 type statusResponse struct {
 	Status string `json:"status"`
 }
 
 // @Summary Создать кошелёк
 // @Description Добавить новый кошелёк
-// @Security BearerAuth
+// @Security Bearer
 // @Tags wallets
 // @Accept json
 // @Produce json
@@ -59,7 +55,7 @@ func (h *Handler) createWallet(c *gin.Context) {
 
 // @Summary Список кошельков
 // @Description Получить все кошельки пользователя
-// @Security BearerAuth
+// @Security Bearer
 // @Tags wallets
 // @Produce json
 // @Success 200 {object} handler.getAllWalletsResponse
@@ -87,7 +83,7 @@ func (h *Handler) getAllWallets(c *gin.Context) {
 
 // @Summary Получить кошелёк по ID
 // @Description Детали конкретного кошелька
-// @Security BearerAuth
+// @Security Bearer
 // @Tags wallets
 // @Produce json
 // @Param id path int true "Wallet ID"
@@ -120,7 +116,7 @@ func (h *Handler) getWalletByID(c *gin.Context) {
 
 // @Summary Получить кошелёк по ID
 // @Description Детали конкретного кошелька
-// @Security BearerAuth
+// @Security Bearer
 // @Tags wallets
 // @Produce json
 // @Param id path int true "Wallet ID"
@@ -160,7 +156,7 @@ func (h *Handler) updateWalletByID(c *gin.Context) {
 
 // @Summary Удалить кошелёк
 // @Description Удалить кошелёк и все транзакции
-// @Security BearerAuth
+// @Security Bearer
 // @Tags wallets
 // @Produce json
 // @Param id path int true "Wallet ID"

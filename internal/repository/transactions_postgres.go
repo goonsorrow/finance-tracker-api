@@ -11,16 +11,16 @@ import (
 
 const (
 	createTrQuery = `INSERT 
-						INTO transactions (wallet_id, user_id, type, amount, category, description, date, created_at, updated_at) 
+						INTO transactions (wallet_id, user_id, type, amount, category_id, description, date, created_at, updated_at) 
 						VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
 						RETURNING id`
 
-	getAllTrQuery = `SELECT id, wallet_id, user_id, type, amount, category, description, date, created_at, updated_at  
+	getAllTrQuery = `SELECT id, wallet_id, user_id, type, amount, category_id, description, date, created_at, updated_at  
 						FROM transactions
 						WHERE user_id = $1 AND wallet_id = $2
 						ORDER BY date`
 
-	getTrByIdQuery = `SELECT id, wallet_id, user_id, type, amount, category, description, date, created_at, updated_at  
+	getTrByIdQuery = `SELECT id, wallet_id, user_id, type, amount, category_id, description, date, created_at, updated_at  
 						 FROM transactions
 						 WHERE user_id = $1 AND wallet_id = $2 AND id = $3`
 
@@ -31,7 +31,7 @@ const (
 	updateTrByIdQuery = `UPDATE transactions 
 							SET type = COALESCE($1,type),
 							amount = COALESCE($2,amount),
-							category = COALESCE($3,category),
+							category_id = COALESCE($3,category_id),
 							description = COALESCE($4,description),
 							date = COALESCE($5,date),
 							updated_at = NOW()
@@ -54,7 +54,7 @@ func (r *TransactionPostgres) Create(ctx context.Context, userId, walletId int, 
 		userId,            //$2
 		input.Type,        //$3
 		input.Amount,      //$4
-		input.Category,    //$5
+		input.CategoryID,  //$5
 		input.Description, //$6
 		input.Date)        //$7
 	if err := row.Scan(&trId); err != nil {
@@ -113,7 +113,7 @@ func (r *TransactionPostgres) Update(ctx context.Context, userId, walletId, tran
 	_, err := r.db.ExecContext(ctx, updateTrByIdQuery,
 		input.Type,        // $1
 		input.Amount,      // $2
-		input.Category,    // $3
+		input.CategoryID,  // $3
 		input.Description, // $4
 		input.Date,        // $5
 		userId,            // $6

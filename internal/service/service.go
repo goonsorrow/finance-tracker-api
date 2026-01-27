@@ -32,10 +32,19 @@ type Transaction interface {
 	Update(ctx context.Context, userId, walletId, transactionId int, input models.UpdateTransactionInput) error
 }
 
+type Category interface {
+	Create(ctx context.Context, userId int, input models.CreateCategoryInput) (int, error)
+	GetAll(ctx context.Context, userId int) ([]models.Category, error)
+	GetById(ctx context.Context, userId, categoryId int) (models.Category, error)
+	Update(ctx context.Context, userId, categoryId int, input models.UpdateCategoryInput) error
+	Delete(ctx context.Context, userId, categoryId int) error
+}
+
 type Service struct {
 	Authorization
 	Wallet
 	Transaction
+	Category
 	logger *slog.Logger
 }
 
@@ -44,6 +53,7 @@ func NewService(repos *repository.Repository, logger *slog.Logger, cfg configs.C
 		Authorization: NewAuthService(repos.Authorization, logger, cfg.JWT),
 		Wallet:        NewWalletService(repos.Wallet, logger),
 		Transaction:   NewTransactionService(repos.Wallet, repos.Transaction, logger),
+		Category:      NewCategoryService(repos.Category, logger),
 		logger:        logger,
 	}
 }

@@ -54,6 +54,15 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		}
 
 	}
+	categories := api.Group("/categories")
+	{
+		categories.GET("/", h.getAllCategories)
+		categories.GET("/:id", h.getCategoryByID)
+		categories.POST("/", h.createCategory)
+		categories.PUT("/:id", h.updateCategoryByID)
+		categories.DELETE("/:id", h.deleteCategoryByID)
+	}
+
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return router

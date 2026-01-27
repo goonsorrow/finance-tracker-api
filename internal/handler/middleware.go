@@ -17,7 +17,7 @@ const (
 	autorizathionHeader = "Authorization"
 )
 
-// @SecurityDefinitions.apikey BearerAuth
+// @SecurityDefinitions.apikey Bearer
 // @In header
 // @Name Authorization
 func (h *Handler) userIdentity(c *gin.Context) {

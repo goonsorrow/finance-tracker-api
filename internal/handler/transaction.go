@@ -22,7 +22,7 @@ type getTransactionByIdResponse struct {
 
 // @Summary Создать транзакцию
 // @Description Пополнение (+) или списание (-) с кошелька
-// @Security BearerAuth
+// @Security Bearer
 // @Tags transactions
 // @Accept json
 // @Produce json
@@ -64,7 +64,7 @@ func (h *Handler) createTransaction(c *gin.Context) {
 
 // @Summary Список транзакций кошелька
 // @Description Получить все операции по кошельку
-// @Security BearerAuth
+// @Security Bearer
 // @Tags transactions
 // @Produce json
 // @Param wallet_id path int true "Wallet ID"
@@ -104,13 +104,13 @@ func (h *Handler) getAllTransactions(c *gin.Context) {
 }
 
 // @Summary Транзакция по ID
-// @Security BearerAuth
+// @Security Bearer
 // @Tags transactions
 // @Produce json
 // @Param wallet_id path int true "Wallet ID"
-// @Param txId path int true "Transaction ID"
+// @Param trId path int true "Transaction ID"
 // @Success 200 {object} handler.getTransactionByIdResponse
-// @Router /api/wallets/{wallet_id}/transactions/{txId} [get]
+// @Router /api/wallets/{wallet_id}/transactions/{trId} [get]
 func (h *Handler) getTransactionByID(c *gin.Context) {
 	userId, err := h.getUserId(c)
 	if err != nil {
@@ -123,7 +123,7 @@ func (h *Handler) getTransactionByID(c *gin.Context) {
 		return
 	}
 
-	transactionId, err := strconv.Atoi(c.Param("txId"))
+	transactionId, err := strconv.Atoi(c.Param("trId"))
 	if err != nil {
 		h.newErrorResponse(c, http.StatusBadRequest, err, "invalid transaction id format")
 		return
@@ -151,15 +151,15 @@ func (h *Handler) getTransactionByID(c *gin.Context) {
 }
 
 // @Summary Обновить транзакцию
-// @Security BearerAuth
+// @Security Bearer
 // @Tags transactions
 // @Accept json
 // @Produce json
 // @Param wallet_id path int true "Wallet ID"
-// @Param txId path int true "Transaction ID"
+// @Param trId path int true "Transaction ID"
 // @Param input body models.UpdateTransactionInput true "Changes"
 // @Success 200 {object} handler.statusResponse
-// @Router /api/wallets/{wallet_id}/transactions/{txId} [put]
+// @Router /api/wallets/{wallet_id}/transactions/{trId} [put]
 func (h *Handler) updateTransactionByID(c *gin.Context) {
 	userId, err := h.getUserId(c)
 	if err != nil {
@@ -172,7 +172,7 @@ func (h *Handler) updateTransactionByID(c *gin.Context) {
 		return
 	}
 
-	transactionId, err := strconv.Atoi(c.Param("txId"))
+	transactionId, err := strconv.Atoi(c.Param("trId"))
 	if err != nil {
 		h.newErrorResponse(c, http.StatusBadRequest, err, "invalid item id format")
 		return
@@ -205,13 +205,13 @@ func (h *Handler) updateTransactionByID(c *gin.Context) {
 }
 
 // @Summary Удалить транзакцию
-// @Security BearerAuth
+// @Security Bearer
 // @Tags transactions
 // @Produce json
 // @Param wallet_id path int true "Wallet ID"
-// @Param txId path int true "Transaction ID"
+// @Param trId path int true "Transaction ID"
 // @Success 200 {object} handler.statusResponse
-// @Router /api/wallets/{wallet_id}/transactions/{txId} [delete]
+// @Router /api/wallets/{wallet_id}/transactions/{trId} [delete]
 func (h *Handler) deleteTransactionByID(c *gin.Context) {
 	userId, err := h.getUserId(c)
 	if err != nil {
@@ -224,7 +224,7 @@ func (h *Handler) deleteTransactionByID(c *gin.Context) {
 		return
 	}
 
-	transactionId, err := strconv.Atoi(c.Param("txId"))
+	transactionId, err := strconv.Atoi(c.Param("trId"))
 	if err != nil {
 		h.newErrorResponse(c, http.StatusBadRequest, err, "invalid transaction id format")
 		return

@@ -8,11 +8,180 @@
     },
     "basePath": "/",
     "paths": {
+        "/api/categories": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Получить все категории пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Список категорий",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.getAllCategoriesResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Добавить новую категорию",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Создать категорию",
+                "parameters": [
+                    {
+                        "description": "Name + Type + Icon",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateCategoryInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Детали конкретной категории",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Получить категорию по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Удалить категорию",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Удалить категорию",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.statusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/wallets/": {
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "description": "Получить все кошельки пользователя",
@@ -44,7 +213,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "description": "Добавить новый кошелёк",
@@ -86,7 +255,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "description": "Детали конкретного кошелька",
@@ -136,7 +305,7 @@
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "description": "Удалить кошелёк и все транзакции",
@@ -179,7 +348,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "description": "Получить все операции по кошельку",
@@ -211,7 +380,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "description": "Пополнение (+) или списание (-) с кошелька",
@@ -256,11 +425,11 @@
                 }
             }
         },
-        "/api/wallets/{wallet_id}/transactions/{txId}": {
+        "/api/wallets/{wallet_id}/transactions/{trId}": {
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "produces": [
@@ -281,7 +450,7 @@
                     {
                         "type": "integer",
                         "description": "Transaction ID",
-                        "name": "txId",
+                        "name": "trId",
                         "in": "path",
                         "required": true
                     }
@@ -298,7 +467,7 @@
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "consumes": [
@@ -322,7 +491,7 @@
                     {
                         "type": "integer",
                         "description": "Transaction ID",
-                        "name": "txId",
+                        "name": "trId",
                         "in": "path",
                         "required": true
                     },
@@ -348,7 +517,7 @@
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "Bearer": []
                     }
                 ],
                 "produces": [
@@ -369,7 +538,7 @@
                     {
                         "type": "integer",
                         "description": "Transaction ID",
-                        "name": "txId",
+                        "name": "trId",
                         "in": "path",
                         "required": true
                     }
@@ -542,6 +711,17 @@
         }
     },
     "definitions": {
+        "handler.getAllCategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Category"
+                    }
+                }
+            }
+        },
         "handler.getAllTransactionsResponse": {
             "type": "object",
             "properties": {
@@ -586,25 +766,95 @@
                 }
             }
         },
+        "models.Category": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string",
+                    "example": "🛒"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Groceries"
+                },
+                "type": {
+                    "description": "\"income\" or \"expense\"",
+                    "type": "string",
+                    "example": "expense"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "usage_count": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "user_id": {
+                    "description": "Fixed typo: omitempy -\u003e omitemty",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "models.CreateCategoryInput": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "icon": {
+                    "type": "string",
+                    "example": "💰"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Salary"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "income",
+                        "expense"
+                    ],
+                    "example": "income"
+                }
+            }
+        },
         "models.CreateTransactionInput": {
             "type": "object",
             "required": [
                 "amount",
                 "category",
+                "date",
                 "type"
             ],
             "properties": {
                 "amount": {
-                    "type": "number"
+                    "type": "number",
+                    "example": 150.5
                 },
                 "category": {
-                    "type": "string"
+                    "type": "integer",
+                    "example": 1
                 },
                 "date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-01-27T12:00:00Z"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Grocery shopping"
                 },
                 "type": {
                     "type": "string",
@@ -612,7 +862,8 @@
                         "income",
                         "expense",
                         "initial"
-                    ]
+                    ],
+                    "example": "expense"
                 }
             }
         },
@@ -625,13 +876,16 @@
             "properties": {
                 "balance": {
                     "type": "number",
-                    "minimum": 0
+                    "minimum": 0,
+                    "example": 1000
                 },
                 "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "USD"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Salary Card"
                 }
             }
         },
@@ -683,8 +937,8 @@
                 "amount": {
                     "type": "integer"
                 },
-                "category": {
-                    "type": "string"
+                "category_id": {
+                    "type": "integer"
                 },
                 "created_at": {
                     "type": "string"
@@ -717,19 +971,24 @@
             "type": "object",
             "properties": {
                 "amount": {
-                    "type": "number"
+                    "type": "number",
+                    "example": 200
                 },
-                "category": {
-                    "type": "string"
+                "category_id": {
+                    "type": "integer",
+                    "example": 3
                 },
                 "date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2026-01-28T15:00:00Z"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Updated description"
                 },
                 "type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "income"
                 }
             }
         },
@@ -737,28 +996,33 @@
             "type": "object",
             "properties": {
                 "balance": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 15000
                 },
                 "created_at": {
                     "type": "string"
                 },
                 "currency": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "USD"
                 },
-                "displayId": {
+                "display_id": {
                     "type": "integer"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Main Wallet"
                 },
                 "updated_at": {
                     "type": "string"
                 },
                 "user_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 10
                 }
             }
         }

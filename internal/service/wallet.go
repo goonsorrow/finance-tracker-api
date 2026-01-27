@@ -56,15 +56,9 @@ func (s *WalletService) Update(ctx context.Context, userId, walletId int, input 
 	if err := input.Validate(); err != nil {
 		return err
 	}
-	var balanceInCents *int64
-	if input.Balance != nil {
-		val := int64(*input.Balance * 100)
-		balanceInCents = &val
-	}
 
 	updateInput := models.UpdateWalletData{
-		Name:    input.Name,
-		Balance: balanceInCents,
+		Name: input.Name,
 	}
 
 	return s.repo.Update(ctx, userId, walletId, updateInput)

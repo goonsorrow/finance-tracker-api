@@ -20,44 +20,54 @@ func NewWalletPostgres(db *sqlx.DB) *WalletPostgres {
 
 const (
 	getAllQuery = `
-    SELECT id, user_id, name, currency, computed_balance, created_at, updated_at,
-           ROW_NUMBER() OVER (ORDER BY created_at DESC) AS display_id
-    FROM wallets
-    WHERE user_id = $1
-    ORDER BY created_at DESC`
+    SELECT 
+        w.id, w.user_id, w.name, w.currency, w.created_at, w.updated_at,
+        COALESCE((
+            SELECT SUM(
+                CASE
+                    WHEN t.type = 'income' OR t.type = 'initial' THEN t.amount
+                    WHEN t.type = 'expense' THEN -t.amount
+                    ELSE 0
+                END
+            )
+            FROM transactions t
+            WHERE t.wallet_id = w.id
+        ), 0)::BIGINT AS computed_balance
+    FROM wallets w
+    WHERE w.user_id = $1
+    ORDER BY w.created_at DESC`
 
 	getByIdQuery = `
     SELECT
-      id, user_id, name, currency,
-      (
+      w.id, w.user_id, w.name, w.currency, w.created_at, w.updated_at,
+      COALESCE((
         SELECT SUM(
           CASE
-            WHEN t.type = 'income' OR t.type = 'initial' THEN +t.amount
+            WHEN t.type = 'income' OR t.type = 'initial' THEN t.amount
             WHEN t.type = 'expense' THEN -t.amount
             ELSE 0
           END
-        ) AS computed_balance
+        )
         FROM transactions t
         WHERE t.wallet_id = w.id
-      ) AS computed_balance
+      ), 0)::BIGINT AS computed_balance
     FROM wallets w
     WHERE w.user_id = $1 AND w.id = $2`
 
 	createQuery = `
-    INSERT INTO wallets (user_id, name, currency, computed_balance, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    INSERT INTO wallets (user_id, name, currency, created_at, updated_at)
+    VALUES ($1, $2, $3, NOW(), NOW())
     RETURNING id`
 
 	createInitialTrQuery = `
-    INSERT INTO transactions (wallet_id, user_id, type, amount, category, description, date, created_at, updated_at)
+    INSERT INTO transactions (wallet_id, user_id, type, amount, category_id, description, date, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`
 
 	updateQuery = `
     UPDATE wallets
     SET name = COALESCE($1, name),
-        computed_balance = COALESCE($2, computed_balance),
         updated_at = NOW()
-    WHERE id = $3 AND user_id = $4`
+    WHERE id = $2 AND user_id = $3`
 
 	deleteQuery = `
     DELETE FROM wallets
@@ -66,7 +76,7 @@ const (
 
 func (r *WalletPostgres) Create(ctx context.Context, userId int, wallet models.Wallet) (int, error) {
 	var id int
-	err := r.db.QueryRowContext(ctx, createQuery, userId, wallet.Name, wallet.Currency, wallet.Balance).Scan(&id)
+	err := r.db.QueryRowContext(ctx, createQuery, userId, wallet.Name, wallet.Currency).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("[WalletCreate] failed to create wallet: %w", err)
 	}
@@ -82,19 +92,19 @@ func (r *WalletPostgres) CreateWithInitial(ctx context.Context, userId int, wall
 	defer tx.Rollback()
 
 	var id int
-	err = tx.QueryRowContext(ctx, createQuery, userId, wallet.Name, wallet.Currency, wallet.Balance).Scan(&id)
+	err = tx.QueryRowContext(ctx, createQuery, userId, wallet.Name, wallet.Currency).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("[createWithInitial] failed to create wallet: %w", err)
 	}
 
 	_, err = tx.ExecContext(ctx, createInitialTrQuery,
-		id,                                   //$1
-		userId,                               //$2
-		"initial",                            //$3
-		wallet.Balance,                       //$4
-		"",                                   //$5
-		"initial wallet balance transaction", //$6
-		time.Now())
+		id,                // $1
+		userId,            // $2
+		"initial",         // $3
+		wallet.Balance,    // $4 (сумма из запроса)
+		nil,               // $5
+		"Initial balance", // $6
+		time.Now())        // $7
 	if err != nil {
 		return 0, fmt.Errorf("failed to write down transaction: %w", err)
 	}
@@ -126,7 +136,7 @@ func (r *WalletPostgres) GetById(ctx context.Context, userId, walletId int) (mod
 }
 
 func (r *WalletPostgres) Update(ctx context.Context, userId, walletId int, input models.UpdateWalletData) error {
-	result, err := r.db.ExecContext(ctx, updateQuery, input.Name, input.Balance, walletId, userId)
+	result, err := r.db.ExecContext(ctx, updateQuery, input.Name, walletId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update wallet: %w", err)
 	}
