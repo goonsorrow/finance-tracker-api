@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/goonsorrow/finance-tracker-api/configs"
+	"github.com/goonsorrow/finance-tracker-api/internal/cache"
 	"github.com/goonsorrow/finance-tracker-api/internal/models"
 	"github.com/goonsorrow/finance-tracker-api/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -27,13 +28,14 @@ type RefreshTokenClaims struct {
 
 type AuthService struct {
 	repo       repository.Authorization
+	cache      cache.Authorization
 	logger     *slog.Logger
 	jwtConfig  configs.JWTConfig
 	accessTTL  time.Duration
 	refreshTTL time.Duration
 }
 
-func NewAuthService(repo repository.Authorization, logger *slog.Logger, jwtConfig configs.JWTConfig) *AuthService {
+func NewAuthService(repo repository.Authorization, cache cache.Authorization, logger *slog.Logger, jwtConfig configs.JWTConfig) *AuthService {
 	accessTTL, err := time.ParseDuration(jwtConfig.AccessTTL)
 	if err != nil {
 		logger.Warn("invalid access_ttl config, using default 15m", "error", err)
@@ -45,11 +47,11 @@ func NewAuthService(repo repository.Authorization, logger *slog.Logger, jwtConfi
 		logger.Warn("invalid refresh_ttl config, using default 24h", "error", err)
 		refreshTTL = 24 * time.Hour
 	}
-	return &AuthService{repo: repo, logger: logger, jwtConfig: jwtConfig, accessTTL: accessTTL, refreshTTL: refreshTTL}
+	return &AuthService{repo: repo, cache: cache, logger: logger, jwtConfig: jwtConfig, accessTTL: accessTTL, refreshTTL: refreshTTL}
 }
 
 func (s *AuthService) CreateUser(ctx context.Context, input models.RegisterInput) (int, error) {
-	hashedPassword, err := generatePasswordHash(ctx, input.Password)
+	hashedPassword, err := generatePasswordHash(input.Password)
 	if err != nil {
 		return 0, err
 	}
@@ -108,6 +110,12 @@ func (s *AuthService) createSession(ctx context.Context, userId int, email strin
 		Token:     refreshToken,
 		ExpiresAt: refreshExpiresAt,
 	}
+
+	key := fmt.Sprintf("refresh:userId:%d:%s", userId, refreshToken)
+	if err := s.cache.CacheRefreshSession(ctx, key, s.refreshTTL); err != nil {
+		return "", "", fmt.Errorf("cache save error: %w", err)
+	}
+
 	if err := s.repo.CreateRefreshSession(ctx, session); err != nil {
 		return "", "", fmt.Errorf("db save error: %w", err)
 	}
@@ -125,13 +133,6 @@ func (s *AuthService) RefreshTokens(ctx context.Context, oldRefreshToken string)
 	if err != nil {
 		return "", "", fmt.Errorf("refresh token not found in db: %w", err)
 	}
-
-	s.logger.Info("DEBUG TIME CHECK",
-		"db_expires_at", session.ExpiresAt,
-		"db_expires_at_utc", session.ExpiresAt.UTC(),
-		"go_now", time.Now(),
-		"go_now_utc", time.Now().UTC(),
-	)
 
 	if session.ExpiresAt.Before(time.Now().UTC()) {
 		_ = s.repo.DeleteRefreshSession(ctx, oldRefreshToken)
@@ -172,7 +173,7 @@ func (s *AuthService) ParseAccessToken(ctx context.Context, accessToken string) 
 	return claims.UserId, nil
 }
 
-func generatePasswordHash(ctx context.Context, password string) (string, error) {
+func generatePasswordHash(password string) (string, error) {
 	cost := bcrypt.DefaultCost
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), cost)
 	if err != nil {
@@ -199,5 +200,15 @@ func (s *AuthService) ValidateRefreshToken(ctx context.Context, refreshToken str
 		return nil, err
 	}
 
+	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, refreshToken)
+	result, err := s.cache.CheckRefreshToken(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("redis error:%w", err)
+	}
+	if result == 0 {
+		return nil, fmt.Errorf("refresh token has expired")
+	}
+
 	return claims, nil
+
 }

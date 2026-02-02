@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -24,29 +23,29 @@ func (h *Handler) userIdentity(c *gin.Context) {
 	header := c.GetHeader(autorizathionHeader)
 	if header == "" {
 		h.newErrorResponse(c, http.StatusUnauthorized, fmt.Errorf("empty header"), "empty header")
+		c.Abort()
 		return
 	}
 
 	headerSlice := strings.Split(header, " ")
 	if len(headerSlice) != 2 {
 		h.newErrorResponse(c, http.StatusUnauthorized, fmt.Errorf("invalid format"), "invalid format")
+		c.Abort()
 		return
 	}
 
 	if headerSlice[0] != "Bearer" {
 		h.newErrorResponse(c, http.StatusUnauthorized, fmt.Errorf("not Bearer"), "not Bearer")
+		c.Abort()
 		return
 	}
 
 	token := headerSlice[1]
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	defer cancel()
-
-	userId, err := h.services.Authorization.
-		ParseAccessToken(ctx, token)
+	userId, err := h.services.Authorization.ParseAccessToken(c.Request.Context(), token)
 	if err != nil {
 		h.newErrorResponse(c, http.StatusUnauthorized, fmt.Errorf("ParseAccessToken Failed"), err.Error())
+		c.Abort()
 		return
 	}
 	h.logger.Info("auth middleware passed",

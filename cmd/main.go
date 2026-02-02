@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,10 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/redis/go-redis/v9"
-
 	"github.com/goonsorrow/finance-tracker-api/configs"
 	"github.com/goonsorrow/finance-tracker-api/internal/app"
+	"github.com/goonsorrow/finance-tracker-api/internal/cache"
 	"github.com/goonsorrow/finance-tracker-api/internal/handler"
 	"github.com/goonsorrow/finance-tracker-api/internal/logger"
 	"github.com/goonsorrow/finance-tracker-api/internal/repository"
@@ -66,22 +64,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, 6379),
+	rdb := cache.NewRedis(cache.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
 		Password: cfg.Redis.Password,
-		DB:       0,
 	})
 
 	// Проверяем подключение
-	_, err = client.Ping(ctx).Result()
+	_, err = rdb.Ping(ctx).Result()
 	if err != nil {
 		slogger.Error("error occured while connecting to redis:", "err", err)
 		return
 	}
 
 	repo := repository.NewRepository(db)
-	// cache := cache.NewCache(client)
-	service := service.NewService(repo, slogger, cfg)
+	cache := cache.NewCache(rdb)
+	service := service.NewService(repo, cache, slogger, cfg)
 	handler := handler.NewHandler(service, slogger)
 	srv := new(app.Server)
 
