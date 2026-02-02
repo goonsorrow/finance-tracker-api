@@ -1,7 +1,7 @@
 # ==========================================
 # 1. Stage Builder (Собираем приложение)
 # ==========================================
- FROM golang:latest AS builder
+FROM golang:latest AS builder
 
 WORKDIR /app
 
