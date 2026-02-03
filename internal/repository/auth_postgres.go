@@ -68,6 +68,7 @@ func (r *AuthPostgres) CreateRefreshSession(ctx context.Context, s models.Refres
 	}
 	return nil
 }
+
 func (r *AuthPostgres) GetRefreshSession(ctx context.Context, token string) (models.RefreshSession, error) {
 	var session models.RefreshSession
 	err := r.db.GetContext(ctx, &session, getSessionQuery, token)
@@ -76,6 +77,7 @@ func (r *AuthPostgres) GetRefreshSession(ctx context.Context, token string) (mod
 	}
 	return session, nil
 }
+
 func (r *AuthPostgres) DeleteRefreshSession(ctx context.Context, token string) error {
 	_, err := r.db.ExecContext(ctx, deleteSessionQuery, token)
 	if err != nil {

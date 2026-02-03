@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/goonsorrow/finance-tracker-api/configs"
+	"github.com/goonsorrow/finance-tracker-api/internal/cache"
 	"github.com/goonsorrow/finance-tracker-api/internal/models"
 	"github.com/goonsorrow/finance-tracker-api/internal/repository"
 )
@@ -48,9 +49,9 @@ type Service struct {
 	logger *slog.Logger
 }
 
-func NewService(repos *repository.Repository, logger *slog.Logger, cfg configs.Config) *Service {
+func NewService(repos *repository.Repository, cache *cache.Cache, logger *slog.Logger, cfg configs.Config) *Service {
 	return &Service{
-		Authorization: NewAuthService(repos.Authorization, logger, cfg.JWT),
+		Authorization: NewAuthService(repos.Authorization, cache.Authorization, logger, cfg.JWT),
 		Wallet:        NewWalletService(repos.Wallet, logger),
 		Transaction:   NewTransactionService(repos.Wallet, repos.Transaction, logger),
 		Category:      NewCategoryService(repos.Category, logger),

@@ -29,7 +29,6 @@ type UpdateWalletInput struct {
 
 type UpdateWalletData struct {
 	Name    *string  `json:"name" example:"Updated Wallet Name"`
-	Balance *float64 `json:"balance" binding:"omitempty,min=0" example:"500.50"`
 }
 
 func (w CreateWalletInput) Validate() error {

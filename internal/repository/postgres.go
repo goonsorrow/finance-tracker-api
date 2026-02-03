@@ -10,13 +10,6 @@ import (
 
 var ErrRecordNotFound = errors.New("record not found")
 
-const (
-	usersTable        = "users"
-	walletsTable      = "wallets"
-	transactionsTable = "transactions"
-	categoriesTable   = "categories"
-)
-
 type Config struct {
 	Host     string
 	Port     int

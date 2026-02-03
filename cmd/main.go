@@ -12,6 +12,7 @@ import (
 
 	"github.com/goonsorrow/finance-tracker-api/configs"
 	"github.com/goonsorrow/finance-tracker-api/internal/app"
+	"github.com/goonsorrow/finance-tracker-api/internal/cache"
 	"github.com/goonsorrow/finance-tracker-api/internal/handler"
 	"github.com/goonsorrow/finance-tracker-api/internal/logger"
 	"github.com/goonsorrow/finance-tracker-api/internal/repository"
@@ -28,6 +29,9 @@ import (
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	slogger := logger.InitSlogger()
 
 	if err := InitConfig(); err != nil {
@@ -56,20 +60,31 @@ func main() {
 		SSLMode:  cfg.DB.SSLMode,
 	})
 	if err != nil {
-		slogger.Error("error occcured while connecting to db:", "err", err)
+		slogger.Error("error occured while connecting to db:", "err", err)
 		os.Exit(1)
 	}
 
-	repos := repository.NewRepository(db)
-	services := service.NewService(repos, slogger, cfg)
-	handlers := handler.NewHandler(services, slogger)
+	rdb := cache.NewRedis(cache.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+	})
+
+	// Проверяем подключение
+	_, err = rdb.Ping(ctx).Result()
+	if err != nil {
+		slogger.Error("error occured while connecting to redis:", "err", err)
+		return
+	}
+
+	repo := repository.NewRepository(db)
+	cache := cache.NewCache(rdb)
+	service := service.NewService(repo, cache, slogger, cfg)
+	handler := handler.NewHandler(service, slogger)
 	srv := new(app.Server)
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
 	go func() {
-		if err := srv.Run(cfg.Server.Port, handlers.InitRoutes()); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.Run(cfg.Server.Port, handler.InitRoutes()); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slogger.Error("Error occured while running http server", "error", err)
 			stop()
 		}
@@ -105,7 +120,7 @@ func InitConfig() error {
 	_ = viper.BindEnv("jwt.access_ttl", "JWT_ACCESS_TTL")
 	_ = viper.BindEnv("jwt.refresh_ttl", "JWT_REFRESH_TTL")
 	_ = viper.BindEnv("jwt.signing_key", "JWT_SIGNING_KEY")
-	//
+
 	// Server
 	_ = viper.BindEnv("server.port", "SERVER_PORT")
 
@@ -116,6 +131,10 @@ func InitConfig() error {
 	_ = viper.BindEnv("db.password", "DB_PASSWORD")
 	_ = viper.BindEnv("db.dbname", "DB_DBNAME")
 	_ = viper.BindEnv("db.sslmode", "DB_SSLMODE")
+	// Redis
+	_ = viper.BindEnv("redis.host", "REDIS_HOST")
+	_ = viper.BindEnv("redis.port", "REDIS_PORT")
+	_ = viper.BindEnv("redis.password", "REDIS_PASSWORD")
 
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("db.sslmode", "disable")
