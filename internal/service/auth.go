@@ -105,49 +105,48 @@ func (s *AuthService) createSession(ctx context.Context, userId int, email strin
 		return "", "", fmt.Errorf("sign refresh token error: %w", err)
 	}
 
-	session := models.RefreshSession{
+	key := fmt.Sprintf("refresh:userId:%d:%s", userId, refreshToken)
+	if err := s.cache.CacheRefreshToken(ctx, key, s.refreshTTL); err != nil {
+		return "", "", fmt.Errorf("Token cache save error: %w", err)
+	}
+
+	/* session := models.RefreshSession{
 		UserID:    userId,
 		Token:     refreshToken,
 		ExpiresAt: refreshExpiresAt,
-	}
+	} */
 
-	key := fmt.Sprintf("refresh:userId:%d:%s", userId, refreshToken)
-	if err := s.cache.CacheRefreshSession(ctx, key, s.refreshTTL); err != nil {
-		return "", "", fmt.Errorf("cache save error: %w", err)
-	}
-
-	if err := s.repo.CreateRefreshSession(ctx, session); err != nil {
+	/* 	if err := s.repo.CreateRefreshSession(ctx, session); err != nil {
 		return "", "", fmt.Errorf("db save error: %w", err)
-	}
+	} */
 
 	return accessToken, refreshToken, nil
 }
 
 func (s *AuthService) RefreshTokens(ctx context.Context, oldRefreshToken string) (string, string, error) {
+
 	claims, err := s.ValidateRefreshToken(ctx, oldRefreshToken)
 	if err != nil {
 		return "", "", fmt.Errorf("invalid refresh token presented: %w", err)
 	}
+	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, oldRefreshToken)
 
-	session, err := s.repo.GetRefreshSession(ctx, oldRefreshToken)
-	if err != nil {
-		return "", "", fmt.Errorf("refresh token not found in db: %w", err)
-	}
-
-	if session.ExpiresAt.Before(time.Now().UTC()) {
-		_ = s.repo.DeleteRefreshSession(ctx, oldRefreshToken)
-		return "", "", errors.New("refresh token is expired")
-	}
-
-	if err := s.repo.DeleteRefreshSession(ctx, oldRefreshToken); err != nil {
+	if err := s.cache.DeleteRefreshToken(ctx, key); err != nil {
 		s.logger.Error("failed to delete old session", "error", err)
 	}
+
 	user, err := s.repo.GetUserById(ctx, claims.UserId)
 	if err != nil {
 		s.logger.Error("failed to find user", "error", err)
 		return "", "", err
 	}
-
+	/* session, err := s.repo.GetRefreshSession(ctx, oldRefreshToken)
+	if err != nil {
+		return "", "", fmt.Errorf("refresh token not found in db: %w", err)
+	} */
+	/* if err := s.repo.DeleteRefreshSession(ctx, oldRefreshToken); err != nil {
+		s.logger.Error("failed to delete old session", "error", err)
+	} */
 	return s.createSession(ctx, user.ID, user.Email)
 
 }
@@ -201,11 +200,11 @@ func (s *AuthService) ValidateRefreshToken(ctx context.Context, refreshToken str
 	}
 
 	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, refreshToken)
-	result, err := s.cache.CheckRefreshToken(ctx, key)
+	exists, err := s.cache.CheckRefreshToken(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("redis error:%w", err)
 	}
-	if result == 0 {
+	if exists == 0 {
 		return nil, fmt.Errorf("refresh token has expired")
 	}
 

@@ -7,7 +7,7 @@ import (
 
 type Category struct {
 	ID         int       `db:"id" json:"id" example:"1"`
-	UserID     *int      `db:"user_id" json:"user_id" binding:"omitempty" example:"10"` // Fixed typo: omitempy -> omitemty
+	UserID     *int      `db:"user_id" json:"user_id" binding:"omitempty" example:"10"`
 	Name       string    `db:"name" json:"name" binding:"required" example:"Groceries"`
 	Type       string    `db:"type" json:"type" example:"expense"` // "income" or "expense"
 	Icon       *string   `db:"icon" json:"icon" binding:"omitempty" example:"🛒"`
