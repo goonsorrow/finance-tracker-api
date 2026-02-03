@@ -23,6 +23,8 @@ Web Framework: Gin-gonic
 
 Database: PostgreSQL (Driver: pgx / sqlx)
 
+Cache: Redis
+
 Config: Viper (поддержка .env и yaml)
 
 Infrastructure: Docker & Docker Compose
