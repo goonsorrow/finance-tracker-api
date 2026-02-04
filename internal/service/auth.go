@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/goonsorrow/finance-tracker-api/configs"
 	"github.com/goonsorrow/finance-tracker-api/internal/cache"
 	"github.com/goonsorrow/finance-tracker-api/internal/models"
@@ -92,8 +93,12 @@ func (s *AuthService) createSession(ctx context.Context, userId int, email strin
 	}
 
 	refreshExpiresAt := time.Now().UTC().Add(s.refreshTTL)
+
+	jti := uuid.New().String()
+
 	refreshTokenObj := jwt.NewWithClaims(jwt.SigningMethodHS256, &RefreshTokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti,
 			Subject:   email,
 			ExpiresAt: jwt.NewNumericDate(refreshExpiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
@@ -105,9 +110,9 @@ func (s *AuthService) createSession(ctx context.Context, userId int, email strin
 		return "", "", fmt.Errorf("sign refresh token error: %w", err)
 	}
 
-	key := fmt.Sprintf("refresh:userId:%d:%s", userId, refreshToken)
+	key := fmt.Sprintf("refresh:userId:%d:%s", userId, jti)
 	if err := s.cache.CacheRefreshToken(ctx, key, s.refreshTTL); err != nil {
-		return "", "", fmt.Errorf("Token cache save error: %w", err)
+		return "", "", fmt.Errorf("uuid cache save error: %w", err)
 	}
 
 	/* session := models.RefreshSession{
@@ -129,7 +134,7 @@ func (s *AuthService) RefreshTokens(ctx context.Context, oldRefreshToken string)
 	if err != nil {
 		return "", "", fmt.Errorf("invalid refresh token presented: %w", err)
 	}
-	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, oldRefreshToken)
+	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, claims.ID)
 
 	if err := s.cache.DeleteRefreshToken(ctx, key); err != nil {
 		s.logger.Error("failed to delete old session", "error", err)
@@ -199,7 +204,7 @@ func (s *AuthService) ValidateRefreshToken(ctx context.Context, refreshToken str
 		return nil, err
 	}
 
-	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, refreshToken)
+	key := fmt.Sprintf("refresh:userId:%d:%s", claims.UserId, claims.ID)
 	exists, err := s.cache.CheckRefreshToken(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("redis error:%w", err)
@@ -210,4 +215,20 @@ func (s *AuthService) ValidateRefreshToken(ctx context.Context, refreshToken str
 
 	return claims, nil
 
+}
+
+func (s *AuthService) LogoutCurrentUserSession(ctx context.Context, userId int, jti string) error {
+	key := fmt.Sprintf("refresh:userId:%d:%s", userId, jti)
+	return s.cache.DeleteRefreshToken(ctx, key)
+}
+
+func (s *AuthService) LogoutAllUserSessions(ctx context.Context, userId int) error {
+	keys, err := s.cache.GetUserRefreshSessions(ctx, userId)
+	if err != nil {
+		return fmt.Errorf("redis error finding refresh sessions:%w", err)
+	}
+	if len(keys) > 0 {
+		return s.cache.DeleteAllRefreshTokens(ctx, keys)
+	}
+	return nil
 }

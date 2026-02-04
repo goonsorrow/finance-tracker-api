@@ -58,7 +58,6 @@ definitions:
         example: 5
         type: integer
       user_id:
-        description: 'Fixed typo: omitempy -> omitemty'
         example: 10
         type: integer
     required:
@@ -124,6 +123,13 @@ definitions:
     required:
     - currency
     - name
+    type: object
+  models.LogoutInput:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
     type: object
   models.RefreshInput:
     properties:
@@ -573,7 +579,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticate user and get JWT token
+      description: Аутентификация и получение JWT токенов
       parameters:
       - description: Credentials
         in: body
@@ -602,7 +608,83 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Sign In
+      summary: Вход
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Отозвать конкретную refresh сессию пользователя (logout here)
+      parameters:
+      - description: Refresh token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.LogoutInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Not Authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed deleting session
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Выйти со конкретного устройства
+      tags:
+      - auth
+  /auth/logout-all:
+    post:
+      consumes:
+      - application/json
+      description: Отозвать все активные refresh сессии пользователя (logout everywhere)
+      parameters:
+      - description: Refresh token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.LogoutInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All sessions deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Not Authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed deleting sessions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Выйти со всех устройств
       tags:
       - auth
   /auth/refresh:

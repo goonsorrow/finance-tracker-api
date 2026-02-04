@@ -64,7 +64,7 @@ func (h *Handler) getUserId(c *gin.Context) (int, error) {
 
 	idInt, ok := id.(int)
 	if !ok {
-		h.newErrorResponse(c, http.StatusInternalServerError, nil, "user id is of invalid type")
+		h.newErrorResponse(c, http.StatusBadRequest, nil, "user id is of invalid type")
 		return 0, errors.New("user id is of invalid type")
 	}
 

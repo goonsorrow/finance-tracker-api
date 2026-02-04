@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -40,8 +41,8 @@ func (h *Handler) signUp(c *gin.Context) {
 	})
 }
 
-// @Summary Sign In
-// @Description Authenticate user and get JWT token
+// @Summary Вход
+// @Description Аутентификация и получение JWT токенов
 // @Tags auth
 // @Accept  json
 // @Produce  json
@@ -102,5 +103,66 @@ func (h *Handler) refresh(c *gin.Context) {
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 	})
+}
 
+// @Summary Выйти со конкретного устройства
+// @Description Отозвать конкретную refresh сессию пользователя (logout here)
+// @Tags auth
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param input body models.LogoutInput true "Refresh token"
+// @Success 200 {object} map[string]string "Session deleted"
+// @Failure 401 {object} map[string]string "Not Authorized"
+// @Failure 500 {object} map[string]string "Failed deleting session"
+// @Router /auth/logout [post]
+func (h *Handler) logout(c *gin.Context) {
+	var input models.LogoutInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		h.newErrorResponse(c, http.StatusBadRequest, fmt.Errorf("logout failed:%w", err), "logout fauled - invalid request")
+		return
+	}
+	claims, err := h.services.ValidateRefreshToken(c.Request.Context(), input.RefreshToken)
+	if err != nil {
+		h.newErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("logout failed:%w", err), "failed validating refresh token")
+		return
+	}
+
+	if err := h.services.Authorization.LogoutCurrentUserSession(c.Request.Context(), claims.UserId, claims.ID); err != nil {
+		h.newErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("logout failed:%w", err), "logout failed")
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "deleted current session"})
+}
+
+// @Summary Выйти со всех устройств
+// @Description Отозвать все активные refresh сессии пользователя (logout everywhere)
+// @Tags auth
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param input body models.LogoutInput true "Refresh token"
+// @Success 200 {object} map[string]string "All sessions deleted"
+// @Failure 401 {object} map[string]string "Not Authorized"
+// @Failure 500 {object} map[string]string "Failed deleting sessions"
+// @Router /auth/logout-all [post]
+func (h *Handler) logoutAll(c *gin.Context) {
+	var input models.LogoutInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		h.newErrorResponse(c, http.StatusBadRequest, fmt.Errorf("logout failed:%w", err), "logout fauled - invalid request")
+		return
+	}
+	claims, err := h.services.ValidateRefreshToken(c.Request.Context(), input.RefreshToken)
+	if err != nil {
+		h.newErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("logout failed:%w", err), "failed validating refresh token")
+		return
+	}
+
+	if err := h.services.Authorization.LogoutAllUserSessions(c.Request.Context(), claims.UserId); err != nil {
+		h.newErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("logout failed:%w", err), "logout failed")
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "all sessions logged out"})
 }

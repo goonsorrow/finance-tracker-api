@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -29,6 +30,24 @@ func (c AuthRedis) CheckRefreshToken(ctx context.Context, key string) (int, erro
 	return int(exists), nil
 }
 
+func (c AuthRedis) GetUserRefreshSessions(ctx context.Context, userId int) ([]string, error) {
+	match := fmt.Sprintf("refresh:userId:%d:*", userId)
+
+	var keys []string
+	i := c.rdb.Scan(ctx, 0, match, 0).Iterator()
+	for i.Next(ctx) {
+		keys = append(keys, i.Val())
+	}
+	if err := i.Err(); err != nil {
+		return nil, err
+	}
+	return keys, nil
+}
+
 func (c AuthRedis) DeleteRefreshToken(ctx context.Context, key string) error {
 	return c.rdb.Del(ctx, key).Err()
+}
+
+func (c AuthRedis) DeleteAllRefreshTokens(ctx context.Context, keys []string) error {
+	return c.rdb.Del(ctx, keys...).Err()
 }

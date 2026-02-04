@@ -11,7 +11,9 @@ import (
 type Authorization interface {
 	CacheRefreshToken(ctx context.Context, key string, refreshTTL time.Duration) error
 	CheckRefreshToken(ctx context.Context, key string) (int, error)
+	GetUserRefreshSessions(ctx context.Context, userId int) ([]string, error)
 	DeleteRefreshToken(ctx context.Context, key string) error
+	DeleteAllRefreshTokens(ctx context.Context, keys []string) error
 }
 
 type Category interface {

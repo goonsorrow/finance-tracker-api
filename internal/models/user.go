@@ -22,3 +22,7 @@ type SignInInput struct {
 type RefreshInput struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
+
+type LogoutInput struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}

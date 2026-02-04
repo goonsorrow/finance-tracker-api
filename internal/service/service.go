@@ -17,6 +17,8 @@ type Authorization interface {
 	ValidateRefreshToken(ctx context.Context, refreshToken string) (*RefreshTokenClaims, error)
 	RefreshTokens(ctx context.Context, oldRefreshToken string) (string, string, error)
 	createSession(ctx context.Context, userId int, email string) (string, string, error)
+	LogoutCurrentUserSession(ctx context.Context, userId int, jti string) error
+	LogoutAllUserSessions(ctx context.Context, userId int) error
 }
 type Wallet interface {
 	Create(ctx context.Context, userId int, wallet models.CreateWalletInput) (int, error)
