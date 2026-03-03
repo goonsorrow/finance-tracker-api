@@ -1,0 +1,21 @@
+# Go workspace
+**/*.zwc
+go.work
+go.work.lock
+
+# Binaries
+bin/
+**/bin/
+
+# Environment
+.env*
+!.env*.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS generated
+.DS_Store
+Thumbs.db
